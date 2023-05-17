@@ -1,0 +1,17 @@
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI.csproj.AssemblyReference.cache
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI.csproj.SuggestedBindingRedirects.cache
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\MainWindow.baml
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\MainWindow.g.cs
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\App.g.cs
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI_MarkupCompile.cache
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI.g.resources
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI.Properties.Resources.resources
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI.csproj.GenerateResource.cache
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI.csproj.CoreCompileInputs.cache
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\bin\Debug\Project_HCI.exe.config
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\bin\Debug\Project_HCI.exe
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\bin\Debug\Project_HCI.pdb
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI.exe
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI.pdb
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\GeneratedInternalTypeHelper.g.cs
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI_MarkupCompile.lref
