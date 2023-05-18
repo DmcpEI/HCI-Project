@@ -42,8 +42,6 @@
             <TreeViewItem Header="Trash" Tag="Trash"/>
         </TreeView>
 
-
-
         <!-- Main Content Area -->
         <Grid Grid.Column="1" Margin="5">
             <Grid.RowDefinitions>
@@ -82,7 +80,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Email List -->
-                <ListView x:Name="EmailList" Margin="0,5,510,5" Background="#F0F0F0" SelectionChanged="EmailList_SelectionChanged" MouseDoubleClick="EmailList_MouseDoubleClick" Grid.ColumnSpan="2">
+                <ListView x:Name="EmailList" Margin="0,5,549,5" Background="#F0F0F0" SelectionChanged="EmailList_SelectionChanged" MouseDoubleClick="EmailList_MouseDoubleClick" Grid.ColumnSpan="2">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Subject}" FontWeight="Bold"/>
@@ -91,9 +89,9 @@
                 </ListView>
 
                 <!-- Email Content -->
-                <Grid x:Name="EmailContentGrid" Grid.Column="1" Margin="160,5,0,5">
+                <Grid x:Name="EmailContentGrid" Grid.Column="1" Margin="136,5,0,5">
                     <Grid.Visibility>
-                        <Binding Path="SelectedItem" ElementName="EmailList" Converter="{StaticResource NullToVisibilityConverter}"/>
+                        <Binding Path="SelectedEmailContent" RelativeSource="{RelativeSource AncestorType=local:MainWindow}" Converter="{StaticResource NullToVisibilityConverter}"/>
                     </Grid.Visibility>
                     <Grid.Resources>
                         <local:ListToStringConverter x:Key="ListToStringConverter" />
@@ -107,16 +105,15 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Sender:"/>
-                    <TextBlock Grid.Row="1" Text="{Binding SelectedItem.Sender, ElementName=EmailList}"/>
-                    <TextBlock Grid.Row="2" FontWeight="Bold" Text="Recipients:"/>
-                    <TextBlock Grid.Row="3" Text="{Binding SelectedItem.Recipients, ElementName=EmailList, Converter={StaticResource ListToStringConverter}}"/>
-                    <TextBlock Grid.Row="4" FontWeight="Bold" Text="Copies:"/>
-                    <TextBlock Grid.Row="5" Text="{Binding SelectedItem.Copies, ElementName=EmailList, Converter={StaticResource ListToStringConverter}}"/>
-                    <TextBlock Grid.Row="6" FontWeight="Bold" Text="Content:"/>
-                    <TextBlock Grid.Row="7" Text="{Binding SelectedItem.Content, ElementName=EmailList}"/>
+                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Sender:" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
+                    <TextBlock Grid.Row="1" Text="{Binding SelectedItem.Sender, ElementName=EmailList}" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
+                    <TextBlock Grid.Row="2" FontWeight="Bold" Text="Recipients:" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
+                    <TextBlock Grid.Row="3" Text="{Binding SelectedItem.Recipients, ElementName=EmailList, Converter={StaticResource ListToStringConverter}}" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
+                    <TextBlock Grid.Row="4" FontWeight="Bold" Text="Copies:" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
+                    <TextBlock Grid.Row="5" Text="{Binding SelectedItem.Copies, ElementName=EmailList, Converter={StaticResource ListToStringConverter}}" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
+                    <TextBlock Grid.Row="6" FontWeight="Bold" Text="Content:" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
+                    <TextBlock Grid.Row="6" Text="{Binding SelectedEmailContent, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" Margin="0,16,2,-277" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
                 </Grid>
-
             </Grid>
         </Grid>
     </Grid>

@@ -15,3 +15,5 @@ C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debu
 C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI.pdb
 C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\GeneratedInternalTypeHelper.g.cs
 C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\Project_HCI_MarkupCompile.lref
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\ComposeWindow.baml
+C:\Users\Utilizador\Desktop\Erasmus\IHC\Project\Project_HCI\Project_HCI\obj\Debug\ComposeWindow.g.cs

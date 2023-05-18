@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Linq;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -10,9 +7,23 @@ using System.Windows.Input;
 
 namespace EmailApplication
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private Dictionary<string, List<Email>> folders;  // Dictionary to store folders and their emails
+        private string selectedEmailContent;
+
+        public string SelectedEmailContent
+        {
+            get { return selectedEmailContent; }
+            set
+            {
+                if (selectedEmailContent != value)
+                {
+                    selectedEmailContent = value;
+                    OnPropertyChanged("SelectedEmailContent");
+                }
+            }
+        }
 
         public MainWindow()
         {
@@ -23,9 +34,9 @@ namespace EmailApplication
             {
                 { "Inbox", new List<Email>
                     {
-                        new Email { Subject = "Subject 1", Sender = "Sender 1", Content = "Email content 1", Recipients = new List<string> { "Recipient 1", "Recipient 2" }, Copies = new List<string> { "Copy 1" }, Attachments = new List<string> { "Attachment1.pdf", "Attachment2.docx" } },
-                        new Email { Subject = "Subject 2", Sender = "Sender 2", Content = "Email content 2", Recipients = new List<string> { "Recipient 3" }, Copies = new List<string>(), Attachments = new List<string>() },
-                        new Email { Subject = "Subject 3", Sender = "Sender 3", Content = "Email content 3", Recipients = new List<string> { "Recipient 4" }, Copies = new List<string>(), Attachments = new List<string>() }
+                        new Email { Subject = "Subject 1", Sender = "diogo.castro@student.um.si", Content = "Email content 1", Recipients = new List<string> { "Recipient 1", "Recipient 2" }, Copies = new List<string> { "Copy 1" }, Attachments = new List<string> { "Attachment1.pdf", "Attachment2.docx" } },
+                        new Email { Subject = "Subject 2", Sender = "diogo.castro@student.um.si", Content = "Email content 2", Recipients = new List<string> { "Recipient 3" }, Copies = new List<string>(), Attachments = new List<string>() },
+                        new Email { Subject = "Subject 3", Sender = "diogo.castro@student.um.si", Content = "Email content 3", Recipients = new List<string> { "Recipient 4" }, Copies = new List<string>(), Attachments = new List<string>() }
                     }
                 },
                 { "Sent", new List<Email>() },
@@ -35,6 +46,15 @@ namespace EmailApplication
 
             // Set the initial EmailList items source to the Inbox folder
             EmailList.ItemsSource = folders["Inbox"];
+
+            DataContext = this;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private void EmailList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -43,17 +63,39 @@ namespace EmailApplication
             if (EmailList.SelectedItem != null)
             {
                 Email selectedEmail = (Email)EmailList.SelectedItem;
-                EmailContentTextBlock.Text = selectedEmail.Content;
+                SelectedEmailContent = selectedEmail.Content;
             }
         }
 
         private void EmailList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            // Handle double-click event
-            if (EmailList.SelectedItem != null)
+            // Get the selected message from the ListView
+            Email selectedEmail = (Email)EmailList.SelectedItem;
+
+            if (selectedEmail != null)
             {
-                Email selectedEmail = (Email)EmailList.SelectedItem;
-                EmailContentTextBlock.Text = selectedEmail.Content;
+                // Create a new instance of the ViewMessageWindow
+                ComposeWindow viewMessageWindow = new ComposeWindow();
+
+                //Perguntar ao Costa como fez
+                // Set the fields of the ViewMessageWindow with the data from the selected message
+                viewMessageWindow.Subject.Text = selectedEmail.Subject;
+                viewMessageWindow.Sender.Text = selectedEmail.Sender;
+                viewMessageWindow.Copies = selectedEmail.Copies;
+                viewMessageWindow.Recipients = selectedEmail.Recipients;
+                viewMessageWindow.Attachments = selectedEmail.Attachments;
+                viewMessageWindow.Content.Text = selectedEmail.Content;
+
+                // Disable the send button and make the input fields read-only
+                viewMessageWindow.SendButton.IsEnabled = false;
+                viewMessageWindow.Sender.IsReadOnly = true;
+                viewMessageWindow.Copies.IsReadOnly = true;
+                viewMessageWindow.Recipients.IsReadOnly = true;
+                viewMessageWindow.Subject.IsReadOnly = true;
+                viewMessageWindow.Content.IsReadOnly = true;
+
+                // Show the ViewMessageWindow
+                viewMessageWindow.Show();
             }
         }
 
@@ -65,8 +107,8 @@ namespace EmailApplication
 
         private void NewMessage_Click(object sender, RoutedEventArgs e)
         {
-            // Handle New Message menu item click event
-            // Add your logic here to open a new message window or perform other actions
+            ComposeWindow composeWindow = new ComposeWindow();
+            composeWindow.ShowDialog();
         }
 
         private void Remove_Click(object sender, RoutedEventArgs e)
@@ -79,10 +121,9 @@ namespace EmailApplication
                 {
                     // Move the selected email to the "Trash" folder
                     Email selectedEmail = (Email)EmailList.SelectedItem;
-                    folders["Inbox"].Remove(selectedEmail);  // Remove from the Inbox folder
-                    folders["Trash"].Add(selectedEmail);  // Add to the Trash folder
-
-                    // Refresh the view to update the UI
+                    folders["Inbox"].Remove(selectedEmail); // Remove from the Inbox folder
+                    folders["Trash"].Add(selectedEmail); // Add to the Trash folder
+                                                         // Refresh the view to update the UI
                     CollectionViewSource.GetDefaultView(EmailList.ItemsSource).Refresh();
                 }
             }
@@ -130,6 +171,7 @@ namespace EmailApplication
             // Add your logic here to clear the SearchTextBox or provide user instructions if needed
         }
     }
+}
 
     public class Email
     {
@@ -147,4 +189,4 @@ namespace EmailApplication
         public string Name { get; set; }
         public List<Email> Emails { get; set; }
     }
-}
+
