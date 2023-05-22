@@ -70,6 +70,7 @@
     <Compile Include="ComposeWindow.xaml.cs">
       <DependentUpon>ComposeWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="EmailToTextConverter.cs" />
     <Compile Include="ListToStringConverter.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

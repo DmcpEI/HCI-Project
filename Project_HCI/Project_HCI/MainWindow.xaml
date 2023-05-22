@@ -9,6 +9,7 @@
         <local:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
         <local:ListToStringConverter x:Key="ListToStringConverter" />
         <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <local:EmailToTextConverter x:Key="EmailToTextConverter" />
     </Window.Resources>
 
     <Grid>
@@ -20,6 +21,8 @@
         <!-- Main Menu -->
         <Menu Grid.Column="0">
             <MenuItem Header="File">
+                <MenuItem Header="Import" Click="Import_Click"/>
+                <MenuItem Header="Export" Click="Export_Click"/>
                 <MenuItem Header="Exit" Click="Exit_Click"/>
             </MenuItem>
             <MenuItem Header="E-mails">
@@ -73,48 +76,42 @@
             </StackPanel>
 
             <!-- Email List and Email Content -->
-            <Grid Grid.Row="1">
+            <Grid Grid.Row="1" Margin="78,0,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Email List -->
-                <ListView x:Name="EmailList" Margin="0,5,549,5" Background="#F0F0F0" SelectionChanged="EmailList_SelectionChanged" MouseDoubleClick="EmailList_MouseDoubleClick" Grid.ColumnSpan="2">
+                <ListView x:Name="EmailList" Margin="-86,5,0,5" Background="#F0F0F0" SelectionChanged="EmailList_SelectionChanged" MouseDoubleClick="EmailList_MouseDoubleClick" Grid.Column="0" SelectedItem="{Binding SelectedEmail, Mode=TwoWay}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Subject}" FontWeight="Bold"/>
+                            <Border BorderBrush="Black" BorderThickness="1" Padding="5">
+                                <StackPanel Orientation="Vertical">
+                                    <TextBlock Text="{Binding Subject}" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding Recipients.Count, StringFormat='Recipients: {0}'}"/>
+                                    <TextBlock Text="{Binding Attachments.Count, StringFormat='Attachments: {0}'}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="Black"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Attachments.Count}" Value="0">
+                                                        <Setter Property="Foreground" Value="Red"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
 
                 <!-- Email Content -->
-                <Grid x:Name="EmailContentGrid" Grid.Column="1" Margin="136,5,0,5">
-                    <Grid.Visibility>
-                        <Binding Path="SelectedEmailContent" RelativeSource="{RelativeSource AncestorType=local:MainWindow}" Converter="{StaticResource NullToVisibilityConverter}"/>
-                    </Grid.Visibility>
-                    <Grid.Resources>
-                        <local:ListToStringConverter x:Key="ListToStringConverter" />
-                    </Grid.Resources>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" FontWeight="Bold" Text="Sender:" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
-                    <TextBlock Grid.Row="1" Text="{Binding SelectedItem.Sender, ElementName=EmailList}" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
-                    <TextBlock Grid.Row="2" FontWeight="Bold" Text="Recipients:" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
-                    <TextBlock Grid.Row="3" Text="{Binding SelectedItem.Recipients, ElementName=EmailList, Converter={StaticResource ListToStringConverter}}" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
-                    <TextBlock Grid.Row="4" FontWeight="Bold" Text="Copies:" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
-                    <TextBlock Grid.Row="5" Text="{Binding SelectedItem.Copies, ElementName=EmailList, Converter={StaticResource ListToStringConverter}}" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
-                    <TextBlock Grid.Row="6" FontWeight="Bold" Text="Content:" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
-                    <TextBlock Grid.Row="6" Text="{Binding SelectedEmailContent, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" Margin="0,16,2,-277" Visibility="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource NullToVisibilityConverter}}"/>
-                </Grid>
+                <TextBlock Grid.Column="1" Text="{Binding SelectedItem, ElementName=EmailList, Converter={StaticResource EmailToTextConverter}}" Margin="5"/>
             </Grid>
+
         </Grid>
     </Grid>
 </Window>
