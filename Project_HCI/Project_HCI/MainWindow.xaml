@@ -14,8 +14,8 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto" MinWidth="125.347"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
         <!-- Main Menu -->
@@ -34,19 +34,20 @@
             </MenuItem>
         </Menu>
 
-        <!-- Sidebar with TreeView -->
         <TreeView Grid.Column="0" Margin="4,32,6,5" SelectedItemChanged="TreeView_SelectedItemChanged">
-            <TreeViewItem Header="Inbox" Tag="Inbox">
-                <TreeViewItem Header="Folder 1" Tag="Folder1"/>
-                <TreeViewItem Header="Folder 2" Tag="Folder2"/>
-            </TreeViewItem>
+            <TreeView.Resources>
+                <HierarchicalDataTemplate DataType="{x:Type local:Folder}" ItemsSource="{Binding Emails}">
+                    <TextBlock Text="{Binding Name}" Foreground="White" Margin="5"/>
+                </HierarchicalDataTemplate>
+            </TreeView.Resources>
+            <TreeViewItem Header="Inbox" Tag="Inbox"/>
             <TreeViewItem Header="Sent" Tag="Sent"/>
             <TreeViewItem Header="Drafts" Tag="Drafts"/>
             <TreeViewItem Header="Trash" Tag="Trash"/>
         </TreeView>
 
         <!-- Main Content Area -->
-        <Grid Grid.Column="1" Margin="5">
+        <Grid Grid.Column="1" Margin="5,5,5,5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>

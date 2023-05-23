@@ -38,14 +38,14 @@ namespace EmailApplication
             string copies = Copies.Text;
             string subject = Subject.Text;
             string content = Content.Text;
-            string attachments = string.Join(", ", Attachments.Items.Cast<string>());
+            List<string> attachments = Attachments.Items.Cast<string>().ToList();
 
             if (string.IsNullOrEmpty(recipients) || string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(content))
             {
                 MessageBox.Show("Please enter recipients and subject.", "Missing Information", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-    
+
             // Create a new Email instance
             Email email = new Email
             {
@@ -54,7 +54,7 @@ namespace EmailApplication
                 Content = content,
                 Recipients = recipients.Split(',').Select(recipient => recipient.Trim()).ToList(),
                 Copies = copies.Split(',').Select(copie => copie.Trim()).ToList(),
-                Attachments = attachments.Split(',').Select(attachment => attachment.Trim()).ToList(),
+                Attachments = attachments,
             };
 
             // Prompt the user to confirm the deletion
@@ -62,7 +62,7 @@ namespace EmailApplication
             if (result == MessageBoxResult.Yes)
             {
                 // Move the selected email to the "Sent" folder
-                folders["Sent"].Emails.Add(email); // Add to the Trash folder
+                folders["Sent"].Emails.Add(email); // Add to the Sent folder
             }
 
             MessageBox.Show("Email Sent");
@@ -70,5 +70,6 @@ namespace EmailApplication
             // Close the ComposeWindow
             Close();
         }
+
     }
 }

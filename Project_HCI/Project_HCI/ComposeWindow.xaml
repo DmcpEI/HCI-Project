@@ -30,7 +30,13 @@
         <TextBox x:Name="Content" Grid.Row="4" Margin="70,10,10,10" AcceptsReturn="True" TextWrapping="Wrap" Grid.RowSpan="2"/>
 
         <Button x:Name="AttachmentsButton" Grid.Row="6" Content="Add Attachment" Click="AddAttachment_Click" Margin="70,6,625,20"/>
-        <ListBox x:Name="Attachments" Grid.Row="6" Margin="198,6,344,20" DisplayMemberPath="FileName"/>
+        <ListBox x:Name="Attachments" Grid.Row="6" Margin="198,6,344,20">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
         <Button x:Name="SendButton" Grid.Row="6" Content="Send" Click="Send_Click" HorizontalAlignment="Right" Margin="0,23,70,46" Width="110"/>
     </Grid>
 </Window>

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -38,6 +39,7 @@ namespace EmailApplication
             {
                 { "Inbox", new Folder
                     {
+                        Name = "Inbox",
                         Emails = new ObservableCollection<Email>
                         {
                             new Email { Subject = "Subject 1", Sender = "diogo.castro@student.um.si", Content = "Email content 1", Recipients = new List<string> { "Recipient 1", "Recipient 2" }, Copies = new List<string> { "Copy 1" }, Attachments = new List<string>()},
@@ -46,9 +48,9 @@ namespace EmailApplication
                         }
                     }
                 },
-                { "Sent", new Folder () },
-                { "Drafts", new Folder () },
-                { "Trash", new Folder () }
+                { "Sent", new Folder {Name = "Sent", Emails = new ObservableCollection<Email>{ } } },
+                { "Drafts", new Folder {Name = "Drafts", Emails = new ObservableCollection<Email>{ } } },
+                { "Trash", new Folder {Name = "Trash", Emails = new ObservableCollection<Email>{ } } }
             };
 
             // Set the initial EmailList items source to the Inbox folder
@@ -120,8 +122,6 @@ namespace EmailApplication
             }
         }
 
-
-
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
             // Handle Exit menu item click event
@@ -148,13 +148,21 @@ namespace EmailApplication
                     if (currentFolder != null)
                     {
                         currentFolder.Emails.Remove(selectedEmail); // Remove from the current folder
-                        folders["Trash"].Emails.Add(selectedEmail); // Add to the Trash folder
-                                                                    // Refresh the view to update the UI
+
+                        // If the current folder is "Trash", permanently delete the email
+                        if (currentFolder.Name != "Trash")
+                        {
+                            // Otherwise, move the email to the "Trash" folder
+                            folders["Trash"].Emails.Add(selectedEmail);
+                        }
+
+                        // Refresh the view to update the UI
                         CollectionViewSource.GetDefaultView(EmailList.ItemsSource).Refresh();
                     }
                 }
             }
         }
+
 
         private Folder GetFolderOfEmail(Email email)
         {
@@ -186,9 +194,103 @@ namespace EmailApplication
             openFileDialog.Filter = "XML Files (*.xml)|*.xml";
             if (openFileDialog.ShowDialog() == true)
             {
-                // Add logic to handle the imported file
                 string filePath = openFileDialog.FileName;
-                // TODO: Handle the import logic
+                ImportData(filePath);
+            }
+        }
+
+        private void ImportData(string filePath)
+        {
+            try
+            {
+                // Load the XML document from the specified file
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(filePath);
+
+                // Clear existing data in the folders dictionary
+                folders.Clear();
+
+                // Get the root element
+                XmlElement rootElement = xmlDoc.DocumentElement;
+                if (rootElement.Name != "EmailData")
+                {
+                    MessageBox.Show("Invalid XML file. Root element 'EmailData' not found.", "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Get the folders element
+                XmlNodeList foldersNodes = rootElement.GetElementsByTagName("Folders");
+                if (foldersNodes.Count == 0)
+                {
+                    MessageBox.Show("Invalid XML file. 'Folders' element not found.", "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                XmlNode foldersNode = foldersNodes[0];
+
+                // Iterate over each folder element
+                foreach (XmlNode folderNode in foldersNode.ChildNodes)
+                {
+                    if (folderNode.Name == "Folder")
+                    {
+                        // Get the folder name
+                        string folderName = folderNode.Attributes["Name"]?.Value;
+                        if (string.IsNullOrEmpty(folderName))
+                        {
+                            MessageBox.Show("Invalid XML file. Folder name not found.", "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
+
+                        // Create a new Folder object
+                        Folder folder = new Folder
+                        {
+                            Name = folderName,
+                            Emails = new ObservableCollection<Email>()
+                        };
+
+                        // Get the emails within the folder
+                        foreach (XmlNode emailNode in folderNode.ChildNodes)
+                        {
+                            if (emailNode.Name == "Email")
+                            {
+                                // Get the email attributes
+                                string subject = emailNode.Attributes["Subject"]?.Value;
+                                string sender = emailNode.Attributes["Sender"]?.Value;
+                                string content = emailNode.Attributes["Content"]?.Value;
+                                string copies = emailNode.Attributes["Copies"]?.Value;
+                                string recipients = emailNode.Attributes["Recipients"]?.Value;
+                                string attachments = emailNode.Attributes["Attachments"]?.Value;
+
+                                // Create a new Email object
+                                Email email = new Email
+                                {
+                                    Subject = subject,
+                                    Sender = sender,
+                                    Content = content,
+                                    Copies = string.IsNullOrEmpty(copies) ? new List<string>() : copies?.Split(',').Select(copie => copie.Trim()).ToList(),
+                                    Recipients = string.IsNullOrEmpty(recipients) ? new List<string>() : recipients?.Split(',').Select(recipient => recipient.Trim()).ToList(),
+                                    Attachments = string.IsNullOrEmpty(attachments) ? new List<string>() : attachments.Split(',').Select(attachment => attachment.Trim()).ToList()
+                                };
+
+                                // Add the email to the folder
+                                folder.Emails.Add(email);
+                            }
+                        }
+
+                        // Add the folder to the folders dictionary
+                        folders.Add(folder.Name, folder);
+                    }
+                }
+
+                // Show a success message
+                MessageBox.Show("Import completed successfully!", "Import", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                CollectionViewSource.GetDefaultView(EmailList.ItemsSource).Refresh();
+            }
+            catch (Exception ex)
+            {
+                // Show an error message if there was an exception during import
+                MessageBox.Show("Error occurred during import:\n" + ex.Message, "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -235,6 +337,7 @@ namespace EmailApplication
             // Export each folder
             foreach (var folder in folders.Values)
             {
+
                 XmlElement folderElement = parentElement.OwnerDocument.CreateElement("Folder");
                 folderElement.SetAttribute("Name", folder.Name);
 
@@ -246,8 +349,8 @@ namespace EmailApplication
                     emailElement.SetAttribute("Sender", email.Sender);
                     emailElement.SetAttribute("Content", email.Content);
                     emailElement.SetAttribute("Copies", string.Join(", ", email.Copies));
-                    emailElement.SetAttribute("Recipients", string.Join(", ", email.Copies));
-                    emailElement.SetAttribute("Attachments", string.Join(", ", email.Copies));
+                    emailElement.SetAttribute("Recipients", string.Join(", ", email.Recipients));
+                    emailElement.SetAttribute("Attachments", string.Join(", ", email.Attachments));
 
                     folderElement.AppendChild(emailElement);
                 }
@@ -258,32 +361,73 @@ namespace EmailApplication
 
         private void Reply_Click(object sender, RoutedEventArgs e)
         {
-            // Handle Reply button click event
-            // Add your logic here to reply to the selected email
+            if (EmailList.SelectedItem != null)
+            {
+                // Move the selected email to the "Trash" folder
+                Email selectedEmail = (Email)EmailList.SelectedItem;
+                // Create a new instance of the ComposeWindow
+                ComposeWindow viewMessageWindow = new ComposeWindow(folders);
+
+                viewMessageWindow.DataContext = selectedEmail;
+
+                viewMessageWindow.Recipients.Text = string.Join(", ", selectedEmail.Recipients);
+
+                // Show the ComposeWindow
+                viewMessageWindow.ShowDialog();
+
+            }
         }
 
         private void ReplyAll_Click(object sender, RoutedEventArgs e)
         {
-            // Handle Reply All button click event
-            // Add your logic here to reply to all recipients of the selected email
+            MessageBox.Show("ReplyAll clicked!");
         }
 
         private void Forward_Click(object sender, RoutedEventArgs e)
         {
-            // Handle Forward button click event
-            // Add your logic here to forward the selected email
+            if (EmailList.SelectedItem != null)
+            {
+                // Move the selected email to the "Trash" folder
+                Email selectedEmail = (Email)EmailList.SelectedItem;
+                // Create a new instance of the ComposeWindow
+                ComposeWindow viewMessageWindow = new ComposeWindow(folders);
+
+                viewMessageWindow.DataContext = selectedEmail;
+
+                // Set the text fields with the converted strings
+                viewMessageWindow.Sender.Text = selectedEmail.Sender;
+                viewMessageWindow.Subject.Text = selectedEmail.Subject;
+                viewMessageWindow.Content.Text = selectedEmail.Content;
+
+                // Add Copies if available
+                if (selectedEmail.Copies != null && selectedEmail.Copies.Count > 0)
+                {
+                    viewMessageWindow.Copies.Text = string.Join(", ", selectedEmail.Copies);
+                }
+
+                // Add Attachments if available
+                if (selectedEmail.Attachments != null && selectedEmail.Attachments.Count > 0)
+                {
+                    foreach (string attachment in selectedEmail.Attachments)
+                    {
+                        viewMessageWindow.Attachments.Items.Add(attachment);
+                    }
+                }
+
+                // Show the ComposeWindow
+                viewMessageWindow.ShowDialog();
+
+            }
         }
 
         private void Search_Click(object sender, RoutedEventArgs e)
         {
-            // Handle Search button click event
-            // Add your logic here to perform a search based on the entered text in SearchTextBox
+            MessageBox.Show("Search clicked!");
         }
 
         private void SearchTextBox_GotFocus(object sender, RoutedEventArgs e)
         {
-            // Handle SearchTextBox got focus event
-            // Add your logic here to clear the SearchTextBox or provide user instructions if needed
+            MessageBox.Show("Search TextBox clicked!");
         }
     }
 
@@ -391,9 +535,42 @@ namespace EmailApplication
     }
 
 
-    public class Folder
+    public class Folder : INotifyPropertyChanged
     {
-        public string Name { get; set; }
-        public ObservableCollection<Email> Emails { get; set; } = new ObservableCollection<Email>();
+        private string name;
+        private ObservableCollection<Email> emails;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public string Name
+        {
+            get { return name; }
+            set
+            {
+                if (name != value)
+                {
+                    name = value;
+                    OnPropertyChanged(nameof(Name));
+                }
+            }
+        }
+
+        public ObservableCollection<Email> Emails
+        {
+            get { return emails; }
+            set
+            {
+                if (emails != value)
+                {
+                    emails = value;
+                    OnPropertyChanged(nameof(Emails));
+                }
+            }
+        }
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }
