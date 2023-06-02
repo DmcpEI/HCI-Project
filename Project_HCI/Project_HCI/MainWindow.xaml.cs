@@ -14,9 +14,22 @@ namespace EmailApplication
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private Dictionary<string, Folder> folders;  // Dictionary to store folders and their emails
-        private string selectedEmailContent;
+        private ObservableCollection<Folder> folders;
+        public ObservableCollection<Folder> Folders
+        {
+            get { return folders; }
+            set
+            {
+                if (folders != value)
+                {
+                    folders = value;
+                    OnPropertyChanged("Folders");
+                    OnPropertyChanged("FoldersContent"); // Notify that the FoldersContent property has changed
+                }
+            }
+        }
 
+        private string selectedEmailContent;
         public string SelectedEmailContent
         {
             get { return selectedEmailContent; }
@@ -35,26 +48,24 @@ namespace EmailApplication
             InitializeComponent();
 
             // Initialize the folders and emails
-            folders = new Dictionary<string, Folder>
+            Folders = new ObservableCollection<Folder>
             {
-                { "Inbox", new Folder
+                new Folder
+                {
+                    Name = "Inbox",
+                    Emails = new ObservableCollection<Email>
                     {
-                        Name = "Inbox",
-                        Emails = new ObservableCollection<Email>
-                        {
-                            new Email { Subject = "Subject 1", Sender = "diogo.castro@student.um.si", Content = "Email content 1", Recipients = new List<string> { "Recipient 1", "Recipient 2" }, Copies = new List<string> { "Copy 1" }, Attachments = new List<string>()},
-                            new Email { Subject = "Subject 2", Sender = "diogo.castro@student.um.si", Content = "Email content 2", Recipients = new List<string> { "Recipient 3" }, Copies = new List<string>(), Attachments = new List<string>()},
-                            new Email { Subject = "Subject 3", Sender = "diogo.castro@student.um.si", Content = "Email content 3", Recipients = new List<string> { "Recipient 4" }, Copies = new List<string>(), Attachments = new List<string>()}
-                        }
+                        new Email { Subject = "Subject 1", Sender = "diogo.castro@student.um.si", Content = "Email content 1", Recipients = new List<string> { "Recipient 1", "Recipient 2" }, Copies = new List<string> { "Copy 1" }, Attachments = new List<string>()},
+                        new Email { Subject = "Subject 2", Sender = "diogo.castro@student.um.si", Content = "Email content 2", Recipients = new List<string> { "Recipient 3" }, Copies = new List<string>(), Attachments = new List<string>()},
+                        new Email { Subject = "Subject 3", Sender = "diogo.castro@student.um.si", Content = "Email content 3", Recipients = new List<string> { "Recipient 4" }, Copies = new List<string>(), Attachments = new List<string>()}
                     }
                 },
-                { "Sent", new Folder {Name = "Sent", Emails = new ObservableCollection<Email>{ } } },
-                { "Drafts", new Folder {Name = "Drafts", Emails = new ObservableCollection<Email>{ } } },
-                { "Trash", new Folder {Name = "Trash", Emails = new ObservableCollection<Email>{ } } }
+                new Folder { Name = "Sent", Emails = new ObservableCollection<Email>() },
+                new Folder { Name = "Trash", Emails = new ObservableCollection<Email>() }
             };
 
             // Set the initial EmailList items source to the Inbox folder
-            EmailList.ItemsSource = folders["Inbox"].Emails;
+            EmailList.ItemsSource = Folders.FirstOrDefault(f => f.Name == "Inbox")?.Emails;
 
             DataContext = this;
         }
@@ -84,7 +95,7 @@ namespace EmailApplication
             if (selectedEmail != null)
             {
                 // Create a new instance of the ComposeWindow
-                ComposeWindow viewMessageWindow = new ComposeWindow(folders);
+                ComposeWindow viewMessageWindow = new ComposeWindow(Folders);   
 
                 viewMessageWindow.DataContext = selectedEmail;
 
@@ -130,7 +141,7 @@ namespace EmailApplication
 
         private void NewMessage_Click(object sender, RoutedEventArgs e)
         {
-            ComposeWindow composeWindow = new ComposeWindow(folders);
+            ComposeWindow composeWindow = new ComposeWindow(Folders);
             composeWindow.ShowDialog();
         }
 
@@ -153,7 +164,7 @@ namespace EmailApplication
                         if (currentFolder.Name != "Trash")
                         {
                             // Otherwise, move the email to the "Trash" folder
-                            folders["Trash"].Emails.Add(selectedEmail);
+                            Folders.FirstOrDefault(f => f.Name == "Trash")?.Emails.Add(selectedEmail);
                         }
 
                         // Refresh the view to update the UI
@@ -163,10 +174,9 @@ namespace EmailApplication
             }
         }
 
-
         private Folder GetFolderOfEmail(Email email)
         {
-            foreach (var folder in folders.Values)
+            foreach (var folder in Folders)
             {
                 if (folder.Emails.Contains(email))
                 {
@@ -178,15 +188,13 @@ namespace EmailApplication
 
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            TreeViewItem selectedFolder = (TreeViewItem)e.NewValue;
-            string folderName = selectedFolder.Tag.ToString();
-
-            if (folders.ContainsKey(folderName))
+            if (e.NewValue is Folder selectedFolder)
             {
-                ObservableCollection<Email> filteredEmails = folders[folderName].Emails;
+                ObservableCollection<Email> filteredEmails = selectedFolder.Emails;
                 EmailList.ItemsSource = filteredEmails;
             }
         }
+
 
         private void Import_Click(object sender, RoutedEventArgs e)
         {
@@ -207,8 +215,7 @@ namespace EmailApplication
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(filePath);
 
-                // Clear existing data in the folders dictionary
-                folders.Clear();
+                Folders.Clear();
 
                 // Get the root element
                 XmlElement rootElement = xmlDoc.DocumentElement;
@@ -219,17 +226,17 @@ namespace EmailApplication
                 }
 
                 // Get the folders element
-                XmlNodeList foldersNodes = rootElement.GetElementsByTagName("Folders");
-                if (foldersNodes.Count == 0)
+                XmlNodeList FoldersNodes = rootElement.GetElementsByTagName("Folders");
+                if (FoldersNodes.Count == 0)
                 {
                     MessageBox.Show("Invalid XML file. 'Folders' element not found.", "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                XmlNode foldersNode = foldersNodes[0];
+                XmlNode FoldersNode = FoldersNodes[0];
 
                 // Iterate over each folder element
-                foreach (XmlNode folderNode in foldersNode.ChildNodes)
+                foreach (XmlNode folderNode in FoldersNode.ChildNodes)
                 {
                     if (folderNode.Name == "Folder")
                     {
@@ -276,9 +283,7 @@ namespace EmailApplication
                                 folder.Emails.Add(email);
                             }
                         }
-
-                        // Add the folder to the folders dictionary
-                        folders.Add(folder.Name, folder);
+                        Folders.Add(folder);
                     }
                 }
 
@@ -335,7 +340,7 @@ namespace EmailApplication
             parentElement.AppendChild(foldersElement);
 
             // Export each folder
-            foreach (var folder in folders.Values)
+            foreach (var folder in Folders)
             {
 
                 XmlElement folderElement = parentElement.OwnerDocument.CreateElement("Folder");
@@ -366,7 +371,7 @@ namespace EmailApplication
                 // Move the selected email to the "Trash" folder
                 Email selectedEmail = (Email)EmailList.SelectedItem;
                 // Create a new instance of the ComposeWindow
-                ComposeWindow viewMessageWindow = new ComposeWindow(folders);
+                ComposeWindow viewMessageWindow = new ComposeWindow(Folders);
 
                 viewMessageWindow.DataContext = selectedEmail;
 
@@ -390,7 +395,7 @@ namespace EmailApplication
                 // Move the selected email to the "Trash" folder
                 Email selectedEmail = (Email)EmailList.SelectedItem;
                 // Create a new instance of the ComposeWindow
-                ComposeWindow viewMessageWindow = new ComposeWindow(folders);
+                ComposeWindow viewMessageWindow = new ComposeWindow(Folders);
 
                 viewMessageWindow.DataContext = selectedEmail;
 
@@ -526,6 +531,7 @@ namespace EmailApplication
             }
         }
 
+        // INotifyPropertyChanged implementation
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)

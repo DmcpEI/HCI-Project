@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -9,8 +10,8 @@ namespace EmailApplication
     public partial class ComposeWindow : Window
     {
 
-        private Dictionary<string, Folder> folders;
-        public ComposeWindow(Dictionary<string, Folder> folders)
+        private ObservableCollection<Folder> folders;
+        public ComposeWindow(ObservableCollection<Folder> folders)
         {
             InitializeComponent();
             this.folders = folders;
@@ -62,7 +63,7 @@ namespace EmailApplication
             if (result == MessageBoxResult.Yes)
             {
                 // Move the selected email to the "Sent" folder
-                folders["Sent"].Emails.Add(email); // Add to the Sent folder
+                folders.FirstOrDefault(f => f.Name == "Sent")?.Emails.Add(email); // Add to the Sent folder
             }
 
             MessageBox.Show("Email Sent");
