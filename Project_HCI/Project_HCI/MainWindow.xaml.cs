@@ -24,11 +24,11 @@ namespace EmailApplication
                 {
                     folders = value;
                     OnPropertyChanged("Folders");
-                    OnPropertyChanged("FoldersContent"); // Notify that the FoldersContent property has changed
                 }
             }
         }
 
+        // Represents the content of the selected email
         private string selectedEmailContent;
         public string SelectedEmailContent
         {
@@ -47,7 +47,7 @@ namespace EmailApplication
         {
             InitializeComponent();
 
-            // Initialize the folders and emails
+            // Initialize the collection of folders
             Folders = new ObservableCollection<Folder>
             {
                 new Folder
@@ -64,24 +64,28 @@ namespace EmailApplication
                 new Folder { Name = "Trash", Emails = new ObservableCollection<Email>() }
             };
 
-            // Set the initial EmailList items source to the Inbox folder
+            // Set the items source of the email list to the emails in the "Inbox" folder
             EmailList.ItemsSource = Folders.FirstOrDefault(f => f.Name == "Inbox")?.Emails;
 
+            // Set the data context of the window to itself
             DataContext = this;
         }
 
+        // Event that is triggered when a property value changes
         public event PropertyChangedEventHandler PropertyChanged;
 
+        // Method to raise the PropertyChanged event
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        // Event handler for the selection change in the email list
         private void EmailList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Handle selection change event
             if (EmailList.SelectedItem != null)
             {
+                // Get the selected email and update the selected email content
                 Email selectedEmail = (Email)EmailList.SelectedItem;
                 SelectedEmailContent = selectedEmail.Content;
             }
@@ -89,29 +93,29 @@ namespace EmailApplication
 
         private void EmailList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            // Get the selected message from the ListView
+            // Get the selected email
             Email selectedEmail = (Email)EmailList.SelectedItem;
 
             if (selectedEmail != null)
             {
-                // Create a new instance of the ComposeWindow
-                ComposeWindow viewMessageWindow = new ComposeWindow(Folders);   
+                // Create a new compose window and set its data context to the selected email
+                ComposeWindow viewMessageWindow = new ComposeWindow(Folders);
 
                 viewMessageWindow.DataContext = selectedEmail;
 
-                // Set the text fields with the converted strings
+                // Set the fields of the compose window to display the details of the selected email
                 viewMessageWindow.Sender.Text = selectedEmail.Sender;
                 viewMessageWindow.Subject.Text = selectedEmail.Subject;
                 viewMessageWindow.Content.Text = selectedEmail.Content;
                 viewMessageWindow.Recipients.Text = string.Join(", ", selectedEmail.Recipients);
 
-                // Add Copies if available
+                // If there are any copies, display them in the copies field of the compose window
                 if (selectedEmail.Copies != null && selectedEmail.Copies.Count > 0)
                 {
                     viewMessageWindow.Copies.Text = string.Join(", ", selectedEmail.Copies);
                 }
 
-                // Add Attachments if available
+                // If there are any attachments, add them to the attachments list of the compose window
                 if (selectedEmail.Attachments != null && selectedEmail.Attachments.Count > 0)
                 {
                     foreach (string attachment in selectedEmail.Attachments)
@@ -120,7 +124,7 @@ namespace EmailApplication
                     }
                 }
 
-                // Disable the send button and make the input fields read-only
+                // Disable certain controls in the compose window to make it read-only
                 viewMessageWindow.SendButton.IsEnabled = false;
                 viewMessageWindow.AttachmentsButton.IsEnabled = false;
                 viewMessageWindow.Recipients.IsReadOnly = true;
@@ -128,52 +132,60 @@ namespace EmailApplication
                 viewMessageWindow.Subject.IsReadOnly = true;
                 viewMessageWindow.Content.IsReadOnly = true;
 
-                // Show the ComposeWindow
+                // Show the compose window as a modal dialog
                 viewMessageWindow.ShowDialog();
             }
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
-            // Handle Exit menu item click event
             Close();
         }
 
+        // Event handler for the New Message button click
         private void NewMessage_Click(object sender, RoutedEventArgs e)
         {
+            // Create a new instance of the ComposeWindow
             ComposeWindow composeWindow = new ComposeWindow(Folders);
+            // Show the ComposeWindow as a modal dialog
             composeWindow.ShowDialog();
         }
 
+        // Event handler for the Remove button click
         private void Remove_Click(object sender, RoutedEventArgs e)
         {
             if (EmailList.SelectedItem != null)
             {
-                // Prompt the user to confirm the deletion
+                // Display a confirmation dialog to confirm deletion
                 MessageBoxResult result = MessageBox.Show("Do you really want to delete this message?", "Confirm Deletion", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
                 if (result == MessageBoxResult.Yes)
                 {
-                    // Move the selected email to the "Trash" folder
+                    // Get the selected email
                     Email selectedEmail = (Email)EmailList.SelectedItem;
-                    Folder currentFolder = GetFolderOfEmail(selectedEmail); // Get the current folder of the selected email
+
+                    // Find the folder that contains the selected email
+                    Folder currentFolder = GetFolderOfEmail(selectedEmail);
+
                     if (currentFolder != null)
                     {
-                        currentFolder.Emails.Remove(selectedEmail); // Remove from the current folder
+                        // Remove the selected email from the current folder
+                        currentFolder.Emails.Remove(selectedEmail);
 
-                        // If the current folder is "Trash", permanently delete the email
+                        // If the current folder is not the "Trash" folder, move the email to the "Trash" folder
                         if (currentFolder.Name != "Trash")
                         {
-                            // Otherwise, move the email to the "Trash" folder
                             Folders.FirstOrDefault(f => f.Name == "Trash")?.Emails.Add(selectedEmail);
                         }
-
-                        // Refresh the view to update the UI
-                        CollectionViewSource.GetDefaultView(EmailList.ItemsSource).Refresh();
                     }
+
+                    // Notify that the "Folders" property has changed (used for data binding)
+                    OnPropertyChanged("Folders");
                 }
             }
         }
 
+        // Helper method to get the folder that contains the specified email
         private Folder GetFolderOfEmail(Email email)
         {
             foreach (var folder in Folders)
@@ -183,49 +195,69 @@ namespace EmailApplication
                     return folder;
                 }
             }
+
             return null;
         }
 
+
+        // Event handler for the TreeView's SelectedItemChanged event
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
+            // Check if the newly selected item is a Folder object
             if (e.NewValue is Folder selectedFolder)
             {
+                // Set the filteredEmails collection to the Emails property of the selectedFolder
                 ObservableCollection<Email> filteredEmails = selectedFolder.Emails;
+
+                // Set the ItemsSource of the EmailList control to the filteredEmails collection
                 EmailList.ItemsSource = filteredEmails;
             }
         }
 
-
+        // Event handler for the Import button click
         private void Import_Click(object sender, RoutedEventArgs e)
         {
+            // Create an instance of the OpenFileDialog
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "XML Files (*.xml)|*.xml";
+
+            // Display the dialog and check if the user selected a file
             if (openFileDialog.ShowDialog() == true)
             {
+                // Get the selected file path
                 string filePath = openFileDialog.FileName;
+
+                // Call the ImportData method with the file path
                 ImportData(filePath);
+
+                // Refresh the GUI elements (This is not working)
+                CollectionViewSource.GetDefaultView(EmailList.ItemsSource).Refresh();
             }
+
         }
 
         private void ImportData(string filePath)
         {
             try
             {
-                // Load the XML document from the specified file
+                // Load the XML document from the specified file path
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(filePath);
 
+                // Clear the existing folders
                 Folders.Clear();
 
-                // Get the root element
+                // Get the root element of the XML document
                 XmlElement rootElement = xmlDoc.DocumentElement;
+
+                // Check if the root element is "EmailData"
                 if (rootElement.Name != "EmailData")
                 {
                     MessageBox.Show("Invalid XML file. Root element 'EmailData' not found.", "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                // Get the folders element
+                // Get the "Folders" element
                 XmlNodeList FoldersNodes = rootElement.GetElementsByTagName("Folders");
                 if (FoldersNodes.Count == 0)
                 {
@@ -235,12 +267,13 @@ namespace EmailApplication
 
                 XmlNode FoldersNode = FoldersNodes[0];
 
-                // Iterate over each folder element
+                // Iterate through each "Folder" element
                 foreach (XmlNode folderNode in FoldersNode.ChildNodes)
                 {
+                    // Check if the node is a "Folder" element
                     if (folderNode.Name == "Folder")
                     {
-                        // Get the folder name
+                        // Get the folder name attribute
                         string folderName = folderNode.Attributes["Name"]?.Value;
                         if (string.IsNullOrEmpty(folderName))
                         {
@@ -255,12 +288,13 @@ namespace EmailApplication
                             Emails = new ObservableCollection<Email>()
                         };
 
-                        // Get the emails within the folder
+                        // Iterate through each "Email" element within the current folder
                         foreach (XmlNode emailNode in folderNode.ChildNodes)
                         {
+                            // Check if the node is an "Email" element
                             if (emailNode.Name == "Email")
                             {
-                                // Get the email attributes
+                                // Get the attributes of the email
                                 string subject = emailNode.Attributes["Subject"]?.Value;
                                 string sender = emailNode.Attributes["Sender"]?.Value;
                                 string content = emailNode.Attributes["Content"]?.Value;
@@ -279,55 +313,61 @@ namespace EmailApplication
                                     Attachments = string.IsNullOrEmpty(attachments) ? new List<string>() : attachments.Split(',').Select(attachment => attachment.Trim()).ToList()
                                 };
 
-                                // Add the email to the folder
+                                // Add the email to the folder's Emails collection
                                 folder.Emails.Add(email);
                             }
                         }
+
+                        // Add the folder to the Folders collection
                         Folders.Add(folder);
                     }
                 }
 
-                // Show a success message
+                // Display a success message
                 MessageBox.Show("Import completed successfully!", "Import", MessageBoxButton.OK, MessageBoxImage.Information);
 
+                // Refresh the view of the EmailList (used for data binding)
                 CollectionViewSource.GetDefaultView(EmailList.ItemsSource).Refresh();
             }
             catch (Exception ex)
             {
-                // Show an error message if there was an exception during import
+                // Display an error message if an exception occurs during the import process
                 MessageBox.Show("Error occurred during import:\n" + ex.Message, "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void Export_Click(object sender, RoutedEventArgs e)
         {
+            // Create a SaveFileDialog to specify the export file path and filter
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "XML Files (*.xml)|*.xml";
+
+            // If the user selects a file and clicks Save
             if (saveFileDialog.ShowDialog() == true)
             {
                 string filePath = saveFileDialog.FileName;
 
                 try
                 {
-                    // Create a new XML document
+                    // Create a new XmlDocument to hold the exported data
                     XmlDocument xmlDoc = new XmlDocument();
 
-                    // Create the root element
+                    // Create the root element named "EmailData" and append it to the XmlDocument
                     XmlElement rootElement = xmlDoc.CreateElement("EmailData");
                     xmlDoc.AppendChild(rootElement);
 
-                    // Export folders
+                    // Export the folders and their emails
                     ExportFolders(rootElement);
 
-                    // Save the XML document to the specified file
+                    // Save the XmlDocument to the specified file path
                     xmlDoc.Save(filePath);
 
-                    // Show a success message
+                    // Display a success message
                     MessageBox.Show("Export completed successfully!", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    // Show an error message if there was an exception during export
+                    // Display an error message if an exception occurs during the export process
                     MessageBox.Show("Error occurred during export:\n" + ex.Message, "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -335,20 +375,21 @@ namespace EmailApplication
 
         private void ExportFolders(XmlElement parentElement)
         {
-            // Create the folders element
+            // Create the "Folders" element as a child of the parent element
             XmlElement foldersElement = parentElement.OwnerDocument.CreateElement("Folders");
             parentElement.AppendChild(foldersElement);
 
-            // Export each folder
+            // Iterate through each folder in the Folders collection
             foreach (var folder in Folders)
             {
-
+                // Create a new "Folder" element with the folder name as an attribute
                 XmlElement folderElement = parentElement.OwnerDocument.CreateElement("Folder");
                 folderElement.SetAttribute("Name", folder.Name);
 
-                // Export each email within the folder
+                // Iterate through each email in the folder's Emails collection
                 foreach (var email in folder.Emails)
                 {
+                    // Create a new "Email" element with the email details as attributes
                     XmlElement emailElement = parentElement.OwnerDocument.CreateElement("Email");
                     emailElement.SetAttribute("Subject", email.Subject);
                     emailElement.SetAttribute("Sender", email.Sender);
@@ -357,9 +398,11 @@ namespace EmailApplication
                     emailElement.SetAttribute("Recipients", string.Join(", ", email.Recipients));
                     emailElement.SetAttribute("Attachments", string.Join(", ", email.Attachments));
 
+                    // Append the "Email" element to the current "Folder" element
                     folderElement.AppendChild(emailElement);
                 }
 
+                // Append the "Folder" element to the "Folders" element
                 foldersElement.AppendChild(folderElement);
             }
         }
@@ -368,23 +411,26 @@ namespace EmailApplication
         {
             if (EmailList.SelectedItem != null)
             {
-                // Move the selected email to the "Trash" folder
+                // Get the selected email
                 Email selectedEmail = (Email)EmailList.SelectedItem;
-                // Create a new instance of the ComposeWindow
+
+                // Create a new compose window
                 ComposeWindow viewMessageWindow = new ComposeWindow(Folders);
 
+                // Set the data context of the compose window to the selected email
                 viewMessageWindow.DataContext = selectedEmail;
 
+                // Set the recipients text box to the recipients of the selected email
                 viewMessageWindow.Recipients.Text = string.Join(", ", selectedEmail.Recipients);
 
-                // Show the ComposeWindow
+                // Show the compose window
                 viewMessageWindow.ShowDialog();
-
             }
         }
 
         private void ReplyAll_Click(object sender, RoutedEventArgs e)
         {
+            // Display a message box indicating that the ReplyAll button was clicked
             MessageBox.Show("ReplyAll clicked!");
         }
 
@@ -392,25 +438,27 @@ namespace EmailApplication
         {
             if (EmailList.SelectedItem != null)
             {
-                // Move the selected email to the "Trash" folder
+                // Get the selected email
                 Email selectedEmail = (Email)EmailList.SelectedItem;
-                // Create a new instance of the ComposeWindow
+
+                // Create a new compose window
                 ComposeWindow viewMessageWindow = new ComposeWindow(Folders);
 
+                // Set the data context of the compose window to the selected email
                 viewMessageWindow.DataContext = selectedEmail;
 
-                // Set the text fields with the converted strings
+                // Populate the compose window with the details of the selected email
                 viewMessageWindow.Sender.Text = selectedEmail.Sender;
                 viewMessageWindow.Subject.Text = selectedEmail.Subject;
                 viewMessageWindow.Content.Text = selectedEmail.Content;
 
-                // Add Copies if available
+                // Populate the copies field if there are any copies
                 if (selectedEmail.Copies != null && selectedEmail.Copies.Count > 0)
                 {
                     viewMessageWindow.Copies.Text = string.Join(", ", selectedEmail.Copies);
                 }
 
-                // Add Attachments if available
+                // Populate the attachments list if there are any attachments
                 if (selectedEmail.Attachments != null && selectedEmail.Attachments.Count > 0)
                 {
                     foreach (string attachment in selectedEmail.Attachments)
@@ -419,21 +467,23 @@ namespace EmailApplication
                     }
                 }
 
-                // Show the ComposeWindow
+                // Display the compose window as a dialog
                 viewMessageWindow.ShowDialog();
-
             }
         }
 
         private void Search_Click(object sender, RoutedEventArgs e)
         {
+            // Display a message box indicating that the Search button was clicked
             MessageBox.Show("Search clicked!");
         }
 
         private void SearchTextBox_GotFocus(object sender, RoutedEventArgs e)
         {
+            // Display a message box indicating that the Search TextBox was clicked
             MessageBox.Show("Search TextBox clicked!");
         }
+
     }
 
     public class Email : INotifyPropertyChanged
@@ -531,7 +581,6 @@ namespace EmailApplication
             }
         }
 
-        // INotifyPropertyChanged implementation
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)
